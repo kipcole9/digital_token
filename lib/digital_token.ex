@@ -101,6 +101,9 @@ defmodule DigitalToken do
       iex> DigitalToken.validate_token("Bitcoin")
       {:ok, "4H95J0R2X"}
 
+      iex> DigitalToken.validate_token "4H95J0R2X"
+      {:ok, "4H95J0R2X"}
+
       iex> DigitalToken.validate_token("Nothing")
       {:error, {DigitalToken.UnknownTokenError, "Nothing"}}
 
@@ -109,8 +112,8 @@ defmodule DigitalToken do
     {:ok, token_id()} | {:error, {module(), any()}}
   def validate_token(id) do
     cond do
-      token = Map.get(tokens(), id) ->
-        {:ok, token}
+      Map.has_key?(tokens(), id) ->
+        {:ok, id}
 
       token = Map.get(short_names(), id) ->
         {:ok, token}
