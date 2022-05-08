@@ -21,7 +21,7 @@ ADA       | 6 | Ada	        | ADA conflicts with ISO 4217, because AD stands for
 BNB       | 8 | Binance	BNB | BNB conflicts with ISO 4217, because BN stands for Brunei Darussalam.
 BSV       | 8 | Bitcoin SV	| BSV conflicts with ISO 4217, because BS stands for Bahamas.
 BTC, XBT  | 8 |	Bitcoin     |	XBT conflicts with ISO 4217, because BT stands for Bhutan.
-DAS       |	8	| Dash	      | DASH is of non-standard length.
+DASH      |	8	| Dash	      | DASH is of non-standard length.
 DOGE      |	4 |	Dogecoin	  | DOGE is of non-standard length.
 ETH       | 18|	Ethereum	  | ETH conflicts with ISO 4217, because ET stands for Ethiopia.
 LTC       | 8 |	Litecoin	  | LTC conflicts with ISO 4217, because LT stands for Lithuania.
