@@ -56,7 +56,8 @@ defmodule DigitalToken.MixProject do
         "mix.exs",
         "README*",
         "CHANGELOG*",
-        "LICENSE*"
+        "LICENSE*",
+        "priv/digital_token_registry.json"
       ]
     ]
   end
