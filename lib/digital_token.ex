@@ -59,6 +59,16 @@ defmodule DigitalToken do
     short_name() => token_id()
   }
 
+  defguard is_digital_token(token_id) when is_binary(token_id) and byte_size(token_id) == 9
+
+  @bitcoin "4H95J0R2X"
+  @ethereum "X9J9K872S"
+  @dogecoin "820B7G1NL"
+
+  @bitcoin_symbol "₿"
+  @ethereum_symbol "Ξ"
+  @dogecoin_symbol "Ð"
+
   @doc """
   Returns a map of the digital tokens in the
   [dtif registry](https://dtif.org).
@@ -121,6 +131,119 @@ defmodule DigitalToken do
       id ->
         {:error, unknown_token_error(id)}
     end
+  end
+
+  @doc """
+  Returns the short name of a digital token.
+
+  ## Arguments
+
+  * `token_id` is any validate digitial token identifier.
+
+  ## Returns
+
+  * `{:ok, short_name}` where `short_name` is either
+    the first short name in `token.informative.short_names` or
+    the token long name if there are no short names.
+
+  * `{:error, {exceoption, reason}}`
+
+  ## Examples
+
+      iex> DigitalToken.short_name "BTC"
+      {:ok, "BTC"}
+
+      iex> DigitalToken.short_name "4H95J0R2X"
+      {:ok, "BTC"}
+
+      iex> DigitalToken.short_name "W0HBX7RC4"
+      {:ok, "Terra"}
+
+  """
+  @spec short_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
+  def short_name(token_id) do
+    with {:ok, token} <- get_token(token_id) do
+      case Map.get(token.informative, :short_names) do
+        [first | _rest] -> {:ok, first}
+        _other -> {:ok, token.informative.long_name}
+      end
+    end
+  end
+
+  @doc """
+  Returns the long name of a digital token.
+
+  ## Arguments
+
+  * `token_id` is any validate digitial token identifier.
+
+  ## Returns
+
+  * `{:ok, long_name}` where `long_name` is the token's
+    registered name.
+
+  * `{:error, {exceoption, reason}}`
+
+  ## Examples
+
+      iex> DigitalToken.long_name "BTC"
+      {:ok, "Bitcoin"}
+
+      iex> DigitalToken.long_name "4H95J0R2X"
+      {:ok, "Bitcoin"}
+
+      iex> DigitalToken.long_name "W0HBX7RC4"
+      {:ok, "Terra"}
+
+  """
+  @spec long_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
+  def long_name(token_id) do
+    with {:ok, token} <- get_token(token_id) do
+      Map.fetch(token.informative, :long_name)
+    end
+  end
+
+  @doc """
+  Returns a currency symbol used in number formatting.
+
+  ## Arguements
+
+  * `token_id` is any validate digitial token identifier.
+
+  * `style` is a number in the range `1` to `4` as follows:
+      * `1` is the token's symbol, if it exists
+      * `2` is the token's short name as a proxy for a currency code
+      * `3` is the token's long name
+      * `4` is the token's symbol as a proxy for a narrow currency symbol
+
+  ## Returns
+
+  * `{:ok, symbol}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Examples
+
+  """
+  @spec symbol(token_id, 1..4) :: {:ok, String.t()} | {:error, {module(), String.t}}
+  def symbol(@bitcoin, style) when style in [1, 4] do
+    {:ok, @bitcoin_symbol}
+  end
+
+  def symbol(@ethereum, style) when style in [1, 4] do
+    {:ok, @ethereum_symbol}
+  end
+
+  def symbol(@dogecoin, style) when style in [1, 4] do
+    {:ok, @dogecoin_symbol}
+  end
+
+  def symbol(token_id, style) when style in [1, 2, 4] do
+    short_name(token_id)
+  end
+
+  def symbol(token_id, 3) do
+    long_name(token_id)
   end
 
   @doc """

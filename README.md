@@ -10,6 +10,10 @@ In addition, the [Digital Token Identification Foundation (DTIF)](https://dtif.o
 
 This library provides a means to download and access the digital token registry. One application is the upcoming integration of `digital_token` into [ex_money](https://github.com/kipcole9/money) providing money operations on both ISO 4217 currencies and ISO 24165 digital tokens.
 
+### Digital Token Identifier Format
+
+The basic number is eight characters (alphanumeric) in length but excludes vowels (A, E, I, O, U) and the letter Y, and zero shall not be the first character.  A ninth character is added and is calculated as a checksum.
+
 ### Non-ISO 4217 cryptocurrency codes
 
 The following are examples of commonly-used but non-compliant `ISO 4217` currency codes. This, plus the inherent flux in the number of digital currencies gave rise to `ISO 24165`.
