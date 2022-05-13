@@ -59,15 +59,16 @@ defmodule DigitalToken do
     short_name() => token_id()
   }
 
+  @typedoc """
+  A mapping of digital token identifiers
+  to a currency symbol for that token.
+
+  """
+  @type symbol_map :: %{
+    token_id() => String.t()
+  }
+
   defguard is_digital_token(token_id) when is_binary(token_id) and byte_size(token_id) == 9
-
-  @bitcoin "4H95J0R2X"
-  @ethereum "X9J9K872S"
-  @dogecoin "820B7G1NL"
-
-  @bitcoin_symbol "₿"
-  @ethereum_symbol "Ξ"
-  @dogecoin_symbol "Ð"
 
   @doc """
   Returns a map of the digital tokens in the
@@ -87,6 +88,16 @@ defmodule DigitalToken do
   @spec short_names :: short_name_map()
   def short_names do
     DigitalToken.Data.short_names()
+  end
+
+  @doc """
+  Returns a mapping of digital token identifiers
+  names to a currency symbol.
+
+  """
+  @spec symbols :: symbol_map()
+  def symbols do
+    DigitalToken.Data.symbols()
   end
 
   @doc """
@@ -224,21 +235,40 @@ defmodule DigitalToken do
 
   ## Examples
 
+      iex> DigitalToken.symbol "BTC", 1
+      {:ok, "₿"}
+
+      iex> DigitalToken.symbol "BTC", 2
+      {:ok, "BTC"}
+
+      iex> DigitalToken.symbol "BTC", 3
+      {:ok, "Bitcoin"}
+
+      iex> DigitalToken.symbol "BTC", 4
+      {:ok, "₿"}
+
+      iex> DigitalToken.symbol "ETH", 4
+      {:ok, "Ξ"}
+
+      iex> DigitalToken.symbol "DOGE", 4
+      {:ok, "Ð"}
+
+      iex> DigitalToken.symbol "DODGY", 4
+      {:error, {DigitalToken.UnknownTokenError, "DODGY"}}
+
   """
   @spec symbol(token_id, 1..4) :: {:ok, String.t()} | {:error, {module(), String.t}}
-  def symbol(@bitcoin, style) when style in [1, 4] do
-    {:ok, @bitcoin_symbol}
+  def symbol(token_id, style) when style in [1, 4] do
+    with {:ok, token_id} <- validate_token(token_id),
+         {:ok, symbol} <- Map.fetch(symbols(), token_id) do
+      {:ok, symbol}
+    else
+      :error -> short_name(token_id)
+      other_error -> other_error
+    end
   end
 
-  def symbol(@ethereum, style) when style in [1, 4] do
-    {:ok, @ethereum_symbol}
-  end
-
-  def symbol(@dogecoin, style) when style in [1, 4] do
-    {:ok, @dogecoin_symbol}
-  end
-
-  def symbol(token_id, style) when style in [1, 2, 4] do
+  def symbol(token_id, 2)  do
     short_name(token_id)
   end
 
