@@ -149,7 +149,7 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digitial token identifier.
+  * `token_id` is any validate digital token identifier.
 
   ## Returns
 
@@ -186,7 +186,7 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digitial token identifier.
+  * `token_id` is any validate digital token identifier.
 
   ## Returns
 
@@ -217,9 +217,9 @@ defmodule DigitalToken do
   @doc """
   Returns a currency symbol used in number formatting.
 
-  ## Arguements
+  ## Arguments
 
-  * `token_id` is any validate digitial token identifier.
+  * `token_id` is any validate digital token identifier.
 
   * `style` is a number in the range `1` to `4` as follows:
       * `1` is the token's symbol, if it exists
@@ -280,7 +280,7 @@ defmodule DigitalToken do
   Returns the registry data for a given token
   identifier.
 
-  ## Arugments
+  ## Arguments
 
   * `id` is any token identifier or short name
 
@@ -323,7 +323,7 @@ defmodule DigitalToken do
   Returns the registry data for a given token
   identifier.
 
-  ## Arugments
+  ## Arguments
 
   * `id` is any token identifier or short name
 
