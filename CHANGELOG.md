@@ -1,5 +1,13 @@
 # Changelog
 
+## Digital Token 0.4.0
+
+This is the changelog for Digital Token version 0.4.0 released on May 20th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
+
+### Enhancements
+
+* Parse and structure the downloaded digital token registry and digital token symbols at download time rather than compile time. This reduces the compile time significantly.
+
 ## Digital Token 0.3.0
 
 This is the changelog for Digital Token version 0.3.0 released on May 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
