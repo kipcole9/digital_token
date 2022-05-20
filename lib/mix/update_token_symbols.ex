@@ -12,8 +12,8 @@ defmodule Mix.Tasks.DigitalToken.Symbols.Update do
   @shortdoc "Update digital token symbol data"
 
   @url "https://raw.githubusercontent.com/yonilevy/crypto-currency-symbols/master/symbols.json"
-  @priv_dir Application.app_dir(:digital_token, "priv")
-  @output_file_name Path.join(@priv_dir, "digital_token_symbols.json")
+
+  @symbols_file_name DigitalToken.Decode.symbols_file_name()
 
   @doc false
   def run(_) do
@@ -21,8 +21,13 @@ defmodule Mix.Tasks.DigitalToken.Symbols.Update do
 
     case Cldr.Http.get(@url) do
       {:ok, body} ->
-        File.write!(@output_file_name, body)
-        Logger.info "Updated digital token symbols at #{@output_file_name}"
+        symbols =
+          body
+          |> DigitalToken.Decode.decode_symbols()
+          |> :erlang.term_to_binary()
+
+        File.write!(@symbols_file_name, symbols)
+        Logger.info "Updated digital token symbols at #{@symbols_file_name}"
 
       {:error, reason} ->
         Logger.warning "Failed to update digital token symbols. #{inspect reason}"

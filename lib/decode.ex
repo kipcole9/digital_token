@@ -8,15 +8,38 @@ defmodule DigitalToken.Decode do
   import Cldr.Map
 
   @priv_dir Application.app_dir(:digital_token, "priv")
-  @output_file_name Path.join(@priv_dir, "digital_token_registry.json")
+  @tokens_file_name Path.join(@priv_dir, "digital_token_registry.etf")
+  @symbols_file_name Path.join(@priv_dir, "digital_token_symbols.etf")
 
-  def data do
-    @output_file_name
-    |> File.read!
+  def tokens_file_name do
+    @tokens_file_name
+  end
+
+  def symbols_file_name do
+    @symbols_file_name
+  end
+
+  def decode_tokens(body) do
+    body
     |> Jason.decode!
     |> Map.fetch!("records")
     |> Enum.map(&restructure_key/1)
     |> merge_map_list()
+  end
+
+  def decode_symbols(body) do
+    body
+    |> Jason.decode!
+    |> Cldr.Map.atomize_keys()
+    |> Enum.map(fn token ->
+      with {:ok, token_id} <- Map.fetch(DigitalToken.Data.short_names(), token.symbol) do
+        {token_id, token.usym}
+      else
+        _other -> nil
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
+    |> Map.new
   end
 
   @skip_atomize [
