@@ -1,5 +1,13 @@
 # Changelog
 
+## Digital Token 0.5.0
+
+This is the changelog for Digital Token version 0.5.0 released on June 22nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
+
+### Enhancements
+
+* Make the JSON library configurable. Like `ex_cldr` it will also attempt to use the JSON library configured for `ex_cldr`, `ecto`, `phoenix` or if otherwise configured `Jason` or `Poison`.
+
 ## Digital Token 0.3.0
 
 This is the changelog for Digital Token version 0.3.0 released on May 14th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)

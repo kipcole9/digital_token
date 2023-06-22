@@ -7,6 +7,8 @@ defmodule DigitalToken.Decode do
 
   import Cldr.Map
 
+  alias DigitalToken.Config
+
   @priv_dir Application.app_dir(:digital_token, "priv")
   @tokens_file_name Path.join(@priv_dir, "digital_token_registry.etf")
   @symbols_file_name Path.join(@priv_dir, "digital_token_symbols.etf")
@@ -21,7 +23,7 @@ defmodule DigitalToken.Decode do
 
   def decode_tokens(body) do
     body
-    |> Jason.decode!
+    |> Config.json_library().decode!
     |> Map.fetch!("records")
     |> Enum.map(&restructure_key/1)
     |> merge_map_list()
@@ -29,7 +31,7 @@ defmodule DigitalToken.Decode do
 
   def decode_symbols(body) do
     body
-    |> Jason.decode!
+    |> Config.json_library().decode!
     |> Cldr.Map.atomize_keys()
     |> Enum.map(fn token ->
       with {:ok, token_id} <- Map.fetch(DigitalToken.Data.short_names(), token.symbol) do
