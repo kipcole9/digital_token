@@ -136,7 +136,16 @@ defmodule DigitalToken do
       Map.has_key?(tokens(), id) ->
         {:ok, id}
 
-      token = Map.get(short_names(), id) ->
+      token = Map.get(short_names(), {id, :native}) ->
+        {:ok, token}
+
+      token = Map.get(short_names(), {id, :auxiliary}) ->
+        {:ok, token}
+
+      token = Map.get(short_names(), {id, :distributed}) ->
+        {:ok, token}
+
+      token = Map.get(short_names(), {id, :fungible}) ->
         {:ok, token}
 
       id ->
@@ -168,7 +177,7 @@ defmodule DigitalToken do
       {:ok, "BTC"}
 
       iex> DigitalToken.short_name "W0HBX7RC4"
-      {:ok, "Terra"}
+      {:ok, "Terra Classic"}
 
   """
   @spec short_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
@@ -204,7 +213,7 @@ defmodule DigitalToken do
       {:ok, "Bitcoin"}
 
       iex> DigitalToken.long_name "W0HBX7RC4"
-      {:ok, "Terra"}
+      {:ok, "Terra Classic"}
 
   """
   @spec long_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
