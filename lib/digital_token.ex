@@ -33,6 +33,11 @@ defmodule DigitalToken do
   @type token_id :: String.t()
 
   @typedoc """
+  The type of a token
+  """
+  @type token_type :: :native | :auxiliary | :distributed | :fungible
+
+  @typedoc """
   A digital token may have zero of more short
   names associated with it. They are arbitrary
   strings, usually three or four characters in
@@ -56,7 +61,7 @@ defmodule DigitalToken do
 
   """
   @type short_name_map :: %{
-    short_name() => token_id()
+    {token_id(), token_type} => token_id()
   }
 
   @typedoc """
