@@ -38,7 +38,7 @@ defmodule DigitalToken do
   @type token_type :: :native | :auxiliary | :distributed | :fungible
 
   @typedoc """
-  A digital token may have zero of more short
+  A digital token may have zero or more short
   names associated with it. They are arbitrary
   strings, usually three or four characters in
   length. For example "BTC", "ETH" and "DOGE".
@@ -163,7 +163,7 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digital token identifier.
+  * `token_id` is any valid digital token identifier.
 
   ## Returns
 
@@ -171,7 +171,7 @@ defmodule DigitalToken do
     the first short name in `token.informative.short_names` or
     the token long name if there are no short names.
 
-  * `{:error, {exceoption, reason}}`
+  * `{:error, {exception, reason}}`
 
   ## Examples
 
@@ -200,14 +200,14 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digital token identifier.
+  * `token_id` is any valid digital token identifier.
 
   ## Returns
 
   * `{:ok, long_name}` where `long_name` is the token's
     registered name.
 
-  * `{:error, {exceoption, reason}}`
+  * `{:error, {exception, reason}}`
 
   ## Examples
 
@@ -233,7 +233,7 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digital token identifier.
+  * `token_id` is any valid digital token identifier.
 
   * `style` is a number in the range `1` to `4` as follows:
       * `1` is the token's symbol, if it exists
