@@ -1,5 +1,29 @@
 # Changelog
 
+## Digital Token 0.6.0
+
+This is the changelog for Digital Token version 0.6.0 released on July 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
+
+### Bug Fixes
+
+* Remove checking Phoenix and Ecto json_library configurations.  Ecto no longer configures its `:json_library` in `config.exs` and checking for Phoenix configuration can cause config failures when [building in Docker](https://github.com/elixir-cldr/cldr/issues/208).
+
+* Sort the short names for a token by their length so that the standard short name is the shortest one.
+
+* Fix code that made an implicit assumption about map order.
+
+### Enhancements
+
+* Update to the latest toekn registry and symbol registry.
+
+## Digital Token 0.5.0
+
+This is the changelog for Digital Token version 0.5.0 released on June 22nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
+
+### Enhancements
+
+* Make the JSON library configurable. Like `ex_cldr` it will also attempt to use the JSON library configured for `ex_cldr`, `ecto`, `phoenix` or if otherwise configured `Jason` or `Poison`.
+
 ## Digital Token 0.4.0
 
 This is the changelog for Digital Token version 0.4.0 released on May 20th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)

@@ -1,7 +1,7 @@
 defmodule DigitalToken.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.6.0"
 
   def project do
     [
@@ -40,7 +40,7 @@ defmodule DigitalToken.MixProject do
   defp deps do
     [
       {:cldr_utils, "~> 2.17"},
-      {:jason, "~> 1.0"},
+      {:jason, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.18", only: [:dev, :release], optional: true, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]

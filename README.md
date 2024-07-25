@@ -44,3 +44,15 @@ end
 
 The docs can be found at <https://hexdocs.pm/digital_token>.
 
+### Configuration
+
+`DigitalToken` requires that a JSON library be configuration that provides a `decode!/1` function. Common libraries sucn as [poison](https://hex.pm/packages/poison), [jason](https://hex.pm/packages/jason) and [jsonrs](https://hex.pm/packages/jsonrs) are good examples.
+
+A JSON library can be configured on `config.exs` like this:
+```elixir
+config :digital_token,
+  json_library: Jason
+```
+Note that the configuration parameter is the module upon which the `decode!/1` function is available.
+
+If no configuration is set, `DigitalToken` will attempt to use `Jason`, `Poison`, the JSON library configuration for [ecto](https://hex.pm/packages/ecto) or the JSON library configured for [Phoenix](https://hex.pm/packages/phoenix).

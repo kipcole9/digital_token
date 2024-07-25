@@ -33,7 +33,12 @@ defmodule DigitalToken do
   @type token_id :: String.t()
 
   @typedoc """
-  A digital token may have zero of more short
+  The type of a token
+  """
+  @type token_type :: :native | :auxiliary | :distributed | :fungible
+
+  @typedoc """
+  A digital token may have zero or more short
   names associated with it. They are arbitrary
   strings, usually three or four characters in
   length. For example "BTC", "ETH" and "DOGE".
@@ -56,7 +61,7 @@ defmodule DigitalToken do
 
   """
   @type short_name_map :: %{
-    short_name() => token_id()
+    {token_id(), token_type} => token_id()
   }
 
   @typedoc """
@@ -136,7 +141,16 @@ defmodule DigitalToken do
       Map.has_key?(tokens(), id) ->
         {:ok, id}
 
-      token = Map.get(short_names(), id) ->
+      token = Map.get(short_names(), {id, :native}) ->
+        {:ok, token}
+
+      token = Map.get(short_names(), {id, :auxiliary}) ->
+        {:ok, token}
+
+      token = Map.get(short_names(), {id, :distributed}) ->
+        {:ok, token}
+
+      token = Map.get(short_names(), {id, :fungible}) ->
         {:ok, token}
 
       id ->
@@ -149,7 +163,7 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digital token identifier.
+  * `token_id` is any valid digital token identifier.
 
   ## Returns
 
@@ -157,7 +171,7 @@ defmodule DigitalToken do
     the first short name in `token.informative.short_names` or
     the token long name if there are no short names.
 
-  * `{:error, {exceoption, reason}}`
+  * `{:error, {exception, reason}}`
 
   ## Examples
 
@@ -168,7 +182,7 @@ defmodule DigitalToken do
       {:ok, "BTC"}
 
       iex> DigitalToken.short_name "W0HBX7RC4"
-      {:ok, "Terra"}
+      {:ok, "Terra Classic"}
 
   """
   @spec short_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
@@ -186,14 +200,14 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digital token identifier.
+  * `token_id` is any valid digital token identifier.
 
   ## Returns
 
   * `{:ok, long_name}` where `long_name` is the token's
     registered name.
 
-  * `{:error, {exceoption, reason}}`
+  * `{:error, {exception, reason}}`
 
   ## Examples
 
@@ -204,7 +218,7 @@ defmodule DigitalToken do
       {:ok, "Bitcoin"}
 
       iex> DigitalToken.long_name "W0HBX7RC4"
-      {:ok, "Terra"}
+      {:ok, "Terra Classic"}
 
   """
   @spec long_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
@@ -219,7 +233,7 @@ defmodule DigitalToken do
 
   ## Arguments
 
-  * `token_id` is any validate digital token identifier.
+  * `token_id` is any valid digital token identifier.
 
   * `style` is a number in the range `1` to `4` as follows:
       * `1` is the token's symbol, if it exists

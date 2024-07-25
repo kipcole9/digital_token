@@ -7,9 +7,15 @@ defmodule DigitalToken.Decode do
 
   import Cldr.Map
 
+  alias DigitalToken.Config
+  alias DigitalToken.Data
+
   @priv_dir Application.app_dir(:digital_token, "priv")
   @tokens_file_name Path.join(@priv_dir, "digital_token_registry.etf")
   @symbols_file_name Path.join(@priv_dir, "digital_token_symbols.etf")
+
+  @external_resource @tokens_file_name
+  @external_resource @symbols_file_name
 
   def tokens_file_name do
     @tokens_file_name
@@ -21,7 +27,7 @@ defmodule DigitalToken.Decode do
 
   def decode_tokens(body) do
     body
-    |> Jason.decode!
+    |> Config.json_library().decode!
     |> Map.fetch!("records")
     |> Enum.map(&restructure_key/1)
     |> merge_map_list()
@@ -29,13 +35,24 @@ defmodule DigitalToken.Decode do
 
   def decode_symbols(body) do
     body
-    |> Jason.decode!
+    |> Config.json_library().decode!
     |> Cldr.Map.atomize_keys()
     |> Enum.map(fn token ->
-      with {:ok, token_id} <- Map.fetch(DigitalToken.Data.short_names(), token.symbol) do
-        {token_id, token.usym}
-      else
-        _other -> nil
+      cond do
+        token_id = Map.get(Data.short_names(), {token.symbol, :native}) ->
+          {token_id, token.usym}
+
+        token_id = Map.get(Data.short_names(), {token.symbol, :auxiliary}) ->
+          {token_id, token.usym}
+
+        token_id = Map.get(Data.short_names(), {token.symbol, :distributed}) ->
+          {token_id, token.usym}
+
+        token_id = Map.get(Data.short_names(), {token.symbol, :fungible}) ->
+          {token_id, token.usym}
+
+        true ->
+          nil
       end
     end)
     |> Enum.reject(&is_nil/1)
@@ -66,7 +83,8 @@ defmodule DigitalToken.Decode do
   def short_names(data) do
     Enum.flat_map(data, fn {token, values} ->
       short_names = Map.get(values.informative, :short_names, [])
-      [{values.informative.long_name, token} | Enum.map(short_names, &{&1, token})]
+      [{{values.informative.long_name, values.header.dti_type}, token} |
+        Enum.map(short_names, &{{&1, values.header.dti_type}, token})]
     end)
     |> Map.new()
   end
@@ -135,7 +153,11 @@ defmodule DigitalToken.Decode do
   # Short names becomes a simple list
 
   defp transform({"short_names" = key, names}) do
-    short_names = Enum.map(names, &Map.fetch!(&1, "short_name"))
+    short_names =
+      names
+      |> Enum.map(&Map.fetch!(&1, "short_name"))
+      |> Enum.sort_by(&String.length/1)
+
     {key, short_names}
   end
 
