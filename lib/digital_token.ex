@@ -38,7 +38,7 @@ defmodule DigitalToken do
   @type token_type :: :native | :auxiliary | :distributed | :fungible
 
   @typedoc """
-  A digital token may have zero of more short
+  A digital token may have zero or more short
   names associated with it. They are arbitrary
   strings, usually three or four characters in
   length. For example "BTC", "ETH" and "DOGE".
