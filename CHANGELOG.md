@@ -1,5 +1,17 @@
 # Changelog
 
+## Digital Token 1.0.0
+
+This is the changelog for Digital Token version 1.0.0 released on September 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
+
+### Bug Fixes
+
+* Fix parsing error on some tokens from the updated registry.
+
+### Enhancements
+
+* Use the erlang `:json` module as a candidate JSON decoder if the underlying OTP release supports it (>= OTP 27).  This support also requires at least `cldr_utils` version 2.28.2.
+
 ## Digital Token 0.6.0
 
 This is the changelog for Digital Token version 0.6.0 released on July 8th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)

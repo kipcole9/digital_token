@@ -35,7 +35,7 @@ defmodule DigitalToken.Decode do
 
   def decode_symbols(body) do
     body
-    |> Config.json_library().decode!
+    |> Jason.decode!()
     |> Cldr.Map.atomize_keys()
     |> Enum.map(fn token ->
       cond do
@@ -164,13 +164,17 @@ defmodule DigitalToken.Decode do
   # Hashes
 
   defp transform({"genesis_block_hash" = key, "0x" <> hash}) do
-    {hash, ""} = Integer.parse(hash, 16)
-    {key, hash}
+    case Integer.parse(hash, 16) do
+      {integer_hash, ""} -> {key, integer_hash}
+      {integer_hash, remainder} -> {key, {integer_hash, remainder}}
+    end
   end
 
   defp transform({"auxiliary_technical_reference" = key, "0x" <> hash}) do
-    {hash, ""} = Integer.parse(hash, 16)
-    {key, hash}
+    case Integer.parse(hash, 16) do
+      {integer_hash, ""} -> {key, integer_hash}
+      {integer_hash, remainder} -> {key, {integer_hash, remainder}}
+    end
   end
 
   # Otherwise do nothing

@@ -1,8 +1,9 @@
 defmodule DigitalToken.Config do
+  json = if(Code.ensure_loaded?(Cldr.Json), do: Cldr.Json, else: nil)
   poison = if(Code.ensure_loaded?(Poison), do: Poison, else: nil)
   jason = if(Code.ensure_loaded?(Jason), do: Jason, else: nil)
   digital_token_json = Application.compile_env(:digital_token, :json_library)
-  @json_lib digital_token_json || jason || poison
+  @json_lib digital_token_json || json || jason || poison
 
   cond do
     Code.ensure_loaded?(@json_lib) and function_exported?(@json_lib, :decode!, 1) ->

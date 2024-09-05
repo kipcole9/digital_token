@@ -1,7 +1,7 @@
 defmodule DigitalToken.MixProject do
   use Mix.Project
 
-  @version "0.6.0"
+  @version "1.0.0"
 
   def project do
     [

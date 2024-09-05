@@ -21,8 +21,11 @@ defmodule Mix.Tasks.DigitalToken.Symbols.Update do
 
     case Cldr.Http.get(@url) do
       {:ok, body} ->
+        # File.write!("token_symbols.json", body)
+
         symbols =
           body
+          |> :erlang.iolist_to_binary()
           |> DigitalToken.Decode.decode_symbols()
           |> :erlang.term_to_binary()
 
