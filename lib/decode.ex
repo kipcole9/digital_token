@@ -35,7 +35,7 @@ defmodule DigitalToken.Decode do
 
   def decode_symbols(body) do
     body
-    |> Jason.decode!()
+    |> Config.json_library().decode!
     |> Cldr.Map.atomize_keys()
     |> Enum.map(fn token ->
       cond do
