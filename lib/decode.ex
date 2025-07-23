@@ -38,22 +38,17 @@ defmodule DigitalToken.Decode do
     |> Config.json_library().decode!
     |> Cldr.Map.atomize_keys()
     |> Enum.map(fn token ->
-      cond do
-        token_id = Map.get(Data.short_names(), {token.symbol, :native}) ->
-          {token_id, token.usym}
+      # Search for the token.symbol in all possible token types
+      # ETH may be classified as :native in the registry data
+      token_types = [:native, :auxiliary, :distributed, :fungible]
 
-        token_id = Map.get(Data.short_names(), {token.symbol, :auxiliary}) ->
+      Enum.find_value(token_types, nil, fn type ->
+        if token_id = Map.get(Data.short_names(), {token.symbol, type}) do
           {token_id, token.usym}
-
-        token_id = Map.get(Data.short_names(), {token.symbol, :distributed}) ->
-          {token_id, token.usym}
-
-        token_id = Map.get(Data.short_names(), {token.symbol, :fungible}) ->
-          {token_id, token.usym}
-
-        true ->
+        else
           nil
-      end
+        end
+      end)
     end)
     |> Enum.reject(&is_nil/1)
     |> Map.new
@@ -134,17 +129,29 @@ defmodule DigitalToken.Decode do
 
   # genesis_block_utc_timestamp
 
+  defp transform({"genesis_block_utc_timestamp" = key, "<locked>"}) do
+    {key, nil}
+  end
+
   defp transform({"genesis_block_utc_timestamp" = key, datetime}) do
     {key, NaiveDateTime.from_iso8601!(datetime)}
   end
 
   # "fork_block_utc_timestamp"
 
+  defp transform({"fork_block_utc_timestamp" = key, "<locked>"}) do
+    {key, nil}
+  end
+
   defp transform({"fork_block_utc_timestamp" = key, datetime}) do
     {key, NaiveDateTime.from_iso8601!(datetime)}
   end
 
   # rec_date_time
+
+  defp transform({"rec_date_time" = key, "<locked>"}) do
+    {key, nil}
+  end
 
   defp transform({"rec_date_time" = key, datetime}) do
     {key, NaiveDateTime.from_iso8601!(datetime)}
@@ -163,11 +170,19 @@ defmodule DigitalToken.Decode do
 
   # Hashes
 
+  defp transform({"genesis_block_hash" = key, "<locked>"}) do
+    {key, nil}
+  end
+
   defp transform({"genesis_block_hash" = key, "0x" <> hash}) do
     case Integer.parse(hash, 16) do
       {integer_hash, ""} -> {key, integer_hash}
       {integer_hash, remainder} -> {key, {integer_hash, remainder}}
     end
+  end
+
+  defp transform({"auxiliary_technical_reference" = key, "<locked>"}) do
+    {key, nil}
   end
 
   defp transform({"auxiliary_technical_reference" = key, "0x" <> hash}) do
