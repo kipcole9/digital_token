@@ -56,3 +56,13 @@ config :digital_token,
 Note that the configuration parameter is the module upon which the `decode!/1` function is available.
 
 If no configuration is set, `DigitalToken` will attempt to use `Jason`, `Poison`, the JSON library configuration for [ecto](https://hex.pm/packages/ecto) or the JSON library configured for [Phoenix](https://hex.pm/packages/phoenix).
+
+### Updating Token Registry
+To update the token registry, do the following:
+1. Create an account on http://dtif.org/
+1. Navigate to [Download DTI Registry](https://dtif.org/download-dti-registry)
+1. Open "Network" tab in Developer console
+1. Click `Download DTI Registry` button
+1. Grab the auth token from the `Authorization` header of the request
+1. Set the token as an environment variable `export DTIF_AUTH_TOKEN=<token>`
+1. Run the update task `mix digital_token.registry.update`
