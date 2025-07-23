@@ -13,12 +13,34 @@ defmodule Mix.Tasks.DigitalToken.Registry.Update do
 
   @tokens_file_name DigitalToken.Decode.tokens_file_name()
 
+  @auth_token "<Insert auth token here>"
+
   @doc false
   def run(_) do
     require Logger
 
-    case Cldr.Http.get(@url) do
-      {:ok, body} ->
+    # Convert headers to the format required by :httpc
+    headers = [
+      {~c"Authorization", ~c"Bearer #{@auth_token}"},
+      {~c"Accept", ~c"*/*"}
+    ]
+
+    # Ensure inets application is started
+    :inets.start()
+    :ssl.start()
+
+    url = String.to_charlist(@url)
+    request = {url, headers}
+    http_options = [ssl: [{:verify, :verify_none}], timeout: 30000]
+    options = [body_format: :binary]
+
+    Logger.info "Fetching digital token registry from #{@url}"
+
+    case :httpc.request(:get, request, http_options, options) do
+      {:ok, {{_, 200, _}, response_headers, body}} ->
+        Logger.info "Successfully retrieved digital token registry"
+        Logger.debug "Response headers: #{inspect response_headers}"
+
         tokens =
           body
           |> DigitalToken.Decode.decode_tokens()

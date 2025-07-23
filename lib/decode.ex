@@ -134,17 +134,29 @@ defmodule DigitalToken.Decode do
 
   # genesis_block_utc_timestamp
 
+  defp transform({"genesis_block_utc_timestamp" = key, "<locked>"}) do
+    {key, nil}
+  end
+
   defp transform({"genesis_block_utc_timestamp" = key, datetime}) do
     {key, NaiveDateTime.from_iso8601!(datetime)}
   end
 
   # "fork_block_utc_timestamp"
 
+  defp transform({"fork_block_utc_timestamp" = key, "<locked>"}) do
+    {key, nil}
+  end
+
   defp transform({"fork_block_utc_timestamp" = key, datetime}) do
     {key, NaiveDateTime.from_iso8601!(datetime)}
   end
 
   # rec_date_time
+
+  defp transform({"rec_date_time" = key, "<locked>"}) do
+    {key, nil}
+  end
 
   defp transform({"rec_date_time" = key, datetime}) do
     {key, NaiveDateTime.from_iso8601!(datetime)}
@@ -163,11 +175,19 @@ defmodule DigitalToken.Decode do
 
   # Hashes
 
+  defp transform({"genesis_block_hash" = key, "<locked>"}) do
+    {key, nil}
+  end
+
   defp transform({"genesis_block_hash" = key, "0x" <> hash}) do
     case Integer.parse(hash, 16) do
       {integer_hash, ""} -> {key, integer_hash}
       {integer_hash, remainder} -> {key, {integer_hash, remainder}}
     end
+  end
+
+  defp transform({"auxiliary_technical_reference" = key, "<locked>"}) do
+    {key, nil}
   end
 
   defp transform({"auxiliary_technical_reference" = key, "0x" <> hash}) do
