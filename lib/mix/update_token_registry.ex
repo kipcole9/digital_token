@@ -13,15 +13,21 @@ defmodule Mix.Tasks.DigitalToken.Registry.Update do
 
   @tokens_file_name DigitalToken.Decode.tokens_file_name()
 
-  @auth_token "<Insert auth token here>"
-
   @doc false
   def run(_) do
     require Logger
 
+    # Get auth token from environment variable
+    auth_token = System.get_env("DTIF_AUTH_TOKEN")
+
+    unless auth_token do
+      Logger.error("Missing environment variable DTIF_AUTH_TOKEN. Please set it before running this task.")
+      Mix.raise("Environment variable DTIF_AUTH_TOKEN is required")
+    end
+
     # Convert headers to the format required by :httpc
     headers = [
-      {~c"Authorization", ~c"Bearer #{@auth_token}"},
+      {~c"Authorization", ~c"Bearer #{auth_token}"},
       {~c"Accept", ~c"*/*"}
     ]
 
@@ -54,4 +60,3 @@ defmodule Mix.Tasks.DigitalToken.Registry.Update do
     end
   end
 end
-
