@@ -106,12 +106,89 @@ defmodule DigitalToken do
   end
 
   @doc """
+  Returns a list of all tokens matching the given short name or long name.
+
+  Since many tokens share the same short name (e.g. "ETH" appears as
+  a native token, as wrapped tokens on various chains, and in fungible
+  groups), this function returns all matches to support disambiguation.
+
+  ## Arguments
+
+  * `name` is a short name (e.g. `"BTC"`) or long name (e.g. `"Bitcoin"`).
+
+  ## Returns
+
+  * A list of `{token_id, dti_type}` tuples, or an empty list if no
+    tokens match.
+
+  ## Examples
+
+      iex> [{id, :native}] = DigitalToken.search("Bitcoin") |> Enum.filter(fn {_, t} -> t == :native end)
+      iex> id
+      "4H95J0R2X"
+
+      iex> DigitalToken.search("Nothing")
+      []
+
+  """
+  @spec search(String.t()) :: [{token_id(), token_type()}]
+  def search(name) when is_binary(name) do
+    Map.get(DigitalToken.Data.search_index(), name, [])
+  end
+
+  @doc """
+  Returns a list of all tokens matching the given name and token type.
+
+  This is useful to narrow results when a short name like `"ETH"` maps to
+  many tokens across different types.
+
+  ## Arguments
+
+  * `name` is a short name (e.g. `"BTC"`) or long name (e.g. `"Bitcoin"`).
+
+  * `dti_type` is one of `:native`, `:auxiliary`, `:distributed`, or `:fungible`.
+
+  ## Returns
+
+  * A list of `{token_id, dti_type}` tuples matching both the name and
+    the type, or an empty list if no tokens match.
+
+  ## Examples
+
+      iex> DigitalToken.search("ETH", :native) |> length() > 1
+      true
+
+      iex> DigitalToken.search("BTC", :native)
+      [{"4H95J0R2X", :native}]
+
+      iex> DigitalToken.search("Nothing", :native)
+      []
+
+  """
+  @spec search(String.t(), token_type()) :: [{token_id(), token_type()}]
+  def search(name, dti_type) when is_binary(name) and dti_type in [:native, :auxiliary, :distributed, :fungible] do
+    name
+    |> search()
+    |> Enum.filter(fn {_id, type} -> type == dti_type end)
+  end
+
+  @doc """
   Validates a token identifier or short name
   and returns the token identifier or an error.
 
   ## Arguments
 
-  * `id` is any token identifier or short name
+  * `id` is any token identifier or short name.
+
+  * `options` is a keyword list of options.
+
+  ## Options
+
+  * `:dti_type` specifies the token type to match when looking up
+    by short name or long name. One of `:native`, `:auxiliary`,
+    `:distributed`, or `:fungible`. When not specified, the lookup
+    tries each type in the following priority order: `:native`,
+    `:auxiliary`, `:distributed`, `:fungible`. The first match wins.
 
   ## Returns
 
@@ -119,7 +196,7 @@ defmodule DigitalToken do
 
   * `{:error, {exception, id}}`
 
-  ## Example
+  ## Examples
 
       iex> DigitalToken.validate_token("BTC")
       {:ok, "4H95J0R2X"}
@@ -134,12 +211,20 @@ defmodule DigitalToken do
       {:error, {DigitalToken.UnknownTokenError, "Nothing"}}
 
   """
-  @spec validate_token(token_id() | short_name()) ::
+  @spec validate_token(token_id() | short_name(), Keyword.t()) ::
     {:ok, token_id()} | {:error, {module(), any()}}
-  def validate_token(id) do
+  def validate_token(id, options \\ []) do
+    dti_type = Keyword.get(options, :dti_type)
+
     cond do
       Map.has_key?(tokens(), id) ->
         {:ok, id}
+
+      dti_type != nil ->
+        case Map.get(short_names(), {id, dti_type}) do
+          nil -> {:error, unknown_token_error(id)}
+          token -> {:ok, token}
+        end
 
       token = Map.get(short_names(), {id, :native}) ->
         {:ok, token}
@@ -153,7 +238,7 @@ defmodule DigitalToken do
       token = Map.get(short_names(), {id, :fungible}) ->
         {:ok, token}
 
-      id ->
+      true ->
         {:error, unknown_token_error(id)}
     end
   end
@@ -181,8 +266,8 @@ defmodule DigitalToken do
       iex> DigitalToken.short_name "4H95J0R2X"
       {:ok, "BTC"}
 
-      iex> DigitalToken.short_name "W0HBX7RC4"
-      {:ok, "Terra Classic"}
+      iex> DigitalToken.short_name "TV5T68SZJ"
+      {:ok, "LUNC"}
 
   """
   @spec short_name(token_id) :: {:ok, String.t()} | {:error, {module(), String.t}}
@@ -217,7 +302,7 @@ defmodule DigitalToken do
       iex> DigitalToken.long_name "4H95J0R2X"
       {:ok, "Bitcoin"}
 
-      iex> DigitalToken.long_name "W0HBX7RC4"
+      iex> DigitalToken.long_name "TV5T68SZJ"
       {:ok, "Terra Classic"}
 
   """

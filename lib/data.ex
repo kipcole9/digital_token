@@ -25,4 +25,8 @@ defmodule DigitalToken.Data do
     @short_names
   end
 
+  @search_index DigitalToken.Decode.search_index(@tokens)
+  def search_index do
+    @search_index
+  end
 end

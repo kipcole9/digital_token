@@ -1,13 +1,13 @@
 defmodule DigitalToken.MixProject do
   use Mix.Project
 
-  @version "1.0.0"
+  @version "2.0.0"
 
   def project do
     [
       app: :digital_token,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.17",
       name: "Digital Token",
       description: description(),
       source_url: "https://github.com/kipcole9/digital_token",
@@ -19,7 +19,7 @@ defmodule DigitalToken.MixProject do
       package: package(),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(inets jason mix)a
+        plt_add_apps: ~w(inets mix)a
       ]
     ]
   end
@@ -33,17 +33,23 @@ defmodule DigitalToken.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :ssl, :inets]
     ]
   end
 
   defp deps do
     [
-      {:cldr_utils, "~> 2.17"},
-      {:jason, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.18", only: [:dev, :release], optional: true, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
-    ]
+    ] ++ maybe_json_polyfill()
+  end
+
+  defp maybe_json_polyfill do
+    if Code.ensure_loaded?(:json) do
+      []
+    else
+      [{:json_polyfill, "~> 0.2 or ~> 1.0"}]
+    end
   end
 
   defp package do

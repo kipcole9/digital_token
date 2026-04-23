@@ -5,11 +5,6 @@ defmodule DigitalToken.Decode do
   # data into a format useful for looking up registry
   # data.
 
-  import Cldr.Map
-
-  alias DigitalToken.Config
-  alias DigitalToken.Data
-
   @priv_dir Application.app_dir(:digital_token, "priv")
   @tokens_file_name Path.join(@priv_dir, "digital_token_registry.etf")
   @symbols_file_name Path.join(@priv_dir, "digital_token_symbols.etf")
@@ -27,49 +22,46 @@ defmodule DigitalToken.Decode do
 
   def decode_tokens(body) do
     body
-    |> Config.json_library().decode!
+    |> json_decode!()
     |> Map.fetch!("records")
+    |> Enum.filter(&has_dti?/1)
     |> Enum.map(&restructure_key/1)
     |> merge_map_list()
   end
 
   def decode_symbols(body) do
     body
-    |> Config.json_library().decode!
-    |> Cldr.Map.atomize_keys()
+    |> json_decode!()
     |> Enum.map(fn token ->
-      # Search for the token.symbol in all possible token types
-      # ETH may be classified as :native in the registry data
+      symbol_name = token["symbol"]
+      unicode_symbol = token["usym"]
+
       token_types = [:native, :auxiliary, :distributed, :fungible]
 
       Enum.find_value(token_types, nil, fn type ->
-        if token_id = Map.get(Data.short_names(), {token.symbol, type}) do
-          {token_id, token.usym}
+        if token_id = Map.get(DigitalToken.Data.short_names(), {symbol_name, type}) do
+          {token_id, unicode_symbol}
         else
           nil
         end
       end)
     end)
     |> Enum.reject(&is_nil/1)
-    |> Map.new
+    |> Map.new()
   end
 
-  @skip_atomize [
-    "template_version",
-    "genesis_block_utc_timestamp",
-    "fork_block_utc_timestamp",
-    "rec_date_time"
-  ]
+  defp has_dti?(%{"Header" => header}) do
+    Map.has_key?(header, "DTI")
+  end
 
   def restructure_key(map) do
     header = Map.fetch!(map, "Header")
-    dti= Map.fetch!(header, "DTI")
+    dti = Map.fetch!(header, "DTI")
 
     map =
       map
-      |> underscore_keys()
-      |> deep_map(&transform/1)
-      |> atomize_keys(skip: @skip_atomize)
+      |> normalize_keys()
+      |> transform_values()
       |> structify(DigitalToken)
 
     %{dti => map}
@@ -77,125 +69,187 @@ defmodule DigitalToken.Decode do
 
   def short_names(data) do
     Enum.flat_map(data, fn {token, values} ->
-      short_names = Map.get(values.informative, :short_names, [])
-      [{{values.informative.long_name, values.header.dti_type}, token} |
-        Enum.map(short_names, &{{&1, values.header.dti_type}, token})]
+      short_names = values.informative.short_names
+      dti_type = Map.get(values.header, :dti_type, :native)
+
+      [{{values.informative.long_name, dti_type}, token} |
+        Enum.map(short_names, &{{&1, dti_type}, token})]
     end)
     |> Map.new()
   end
+
+  def search_index(data) do
+    Enum.reduce(data, %{}, fn {token_id, values}, acc ->
+      short_names = values.informative.short_names
+      long_name = values.informative.long_name
+      dti_type = Map.get(values.header, :dti_type, :native)
+
+      names = [long_name | short_names] |> Enum.reject(&is_nil/1) |> Enum.uniq()
+
+      Enum.reduce(names, acc, fn name, inner_acc ->
+        Map.update(inner_acc, name, [{token_id, dti_type}], &[{token_id, dti_type} | &1])
+      end)
+    end)
+  end
+
+  defp merge_map_list(maps) do
+    Enum.reduce(maps, %{}, &Map.merge(&2, &1))
+  end
+
+  # ── Key normalization ─────────────────────────────────────────
+
+  defp normalize_keys(map) when is_map(map) do
+    map
+    |> Enum.map(fn {key, value} ->
+      new_key = normalize_key(key)
+      {new_key, normalize_keys(value)}
+    end)
+    |> Map.new()
+  end
+
+  defp normalize_keys(list) when is_list(list) do
+    Enum.map(list, &normalize_keys/1)
+  end
+
+  defp normalize_keys(value), do: value
+
+  @key_map %{
+    "Header" => :header,
+    "Informative" => :informative,
+    "Normative" => :normative,
+    "Metadata" => :metadata,
+    "DTI" => :dti,
+    "DTIType" => :dti_type,
+    "DLTType" => :dlt_type,
+    "LongName" => :long_name,
+    "ShortNames" => :short_names,
+    "ShortName" => :short_name,
+    "UnitMultiplier" => :unit_multiplier,
+    "URL" => :url,
+    "PublicDistributedLedgerIndication" => :public_distributed_ledger_indication,
+    "BlockNumberOffset" => :block_number_offset,
+    "AnchorBlockHash" => :anchor_block_hash,
+    "AnchorBlockHashAlgorithm" => :anchor_block_hash_algorithm,
+    "AnchorBlockUTCTimestamp" => :anchor_block_utc_timestamp,
+    "AnchorBlockHeight" => :anchor_block_height,
+    "AuxiliaryDistributedLedger" => :auxiliary_distributed_ledger,
+    "AuxiliaryMechanism" => :auxiliary_mechanism,
+    "AuxiliaryTechnicalReference" => :auxiliary_technical_reference,
+    "EquivalentDigitalTokenGroupDTI" => :equivalent_digital_token_group_dti,
+    "ProtocolDistributedLedger" => :protocol_distributed_ledger,
+    "DTIExternalIdentifiers" => :dti_external_identifiers,
+    "DigitalAssetExternalIdentifiers" => :digital_asset_external_identifiers,
+    "DigitalAssetExternalIdentifierType" => :digital_asset_external_identifier_type,
+    "DigitalAssetExternalIdentifierValue" => :digital_asset_external_identifier_value,
+    "IssuerIdentifiers" => :issuer_identifiers,
+    "MaintainerIdentifiers" => :maintainer_identifiers,
+    "OrigLangLongName" => :orig_lang_long_name,
+    "recVersion" => :rec_version,
+    "recDateTime" => :rec_date_time,
+    "templateVersion" => :template_version,
+    "Provisional" => :provisional,
+    "Private" => :private,
+    "Disputed" => :disputed,
+    "Deleted" => :deleted,
+    "Certified" => :certified,
+    "Issued" => :issued,
+    "Lapsed" => :lapsed,
+    "Retired" => :retired
+  }
+
+  defp normalize_key(key) when is_binary(key) do
+    Map.get(@key_map, key, underscore(key))
+  end
+
+  defp underscore(key) do
+    key
+    |> String.replace(~r/([A-Z]+)([A-Z][a-z])/, "\\1_\\2")
+    |> String.replace(~r/([a-z\d])([A-Z])/, "\\1_\\2")
+    |> String.downcase()
+    |> String.to_atom()
+  end
+
+  # ── Value transformations ─────────────────────────────────────
+
+  defp transform_values(map) when is_map(map) do
+    map
+    |> Enum.reject(fn {_key, value} -> value == "<locked>" end)
+    |> Enum.map(fn {key, value} -> {key, transform_value(key, value)} end)
+    |> Enum.reject(fn {_key, value} -> value == :locked_removed end)
+    |> Map.new()
+  end
+
+  defp transform_value(:dti_type, 0), do: :auxiliary
+  defp transform_value(:dti_type, 1), do: :native
+  defp transform_value(:dti_type, 2), do: :distributed
+  defp transform_value(:dti_type, 3), do: :fungible
+
+  defp transform_value(:dlt_type, "0"), do: :other
+  defp transform_value(:dlt_type, "1"), do: :blockchain
+  defp transform_value(:dlt_type, 0), do: :other
+  defp transform_value(:dlt_type, 1), do: :blockchain
+
+  defp transform_value(:template_version, "V" <> version) do
+    Version.parse!(version)
+  end
+
+  defp transform_value(:short_names, %{short_name: name}) when is_binary(name) do
+    [name]
+  end
+
+  defp transform_value(:short_names, names) when is_list(names) do
+    names
+    |> Enum.map(fn
+      %{short_name: name} -> name
+      name when is_binary(name) -> name
+    end)
+    |> Enum.sort_by(&String.length/1)
+  end
+
+  defp transform_value(:short_names, nil), do: []
+
+  defp transform_value(:anchor_block_utc_timestamp, datetime) when is_binary(datetime) do
+    NaiveDateTime.from_iso8601!(datetime)
+  end
+
+  defp transform_value(:rec_date_time, datetime) when is_binary(datetime) do
+    NaiveDateTime.from_iso8601!(datetime)
+  end
+
+  defp transform_value(:anchor_block_hash, "0x" <> hash) do
+    case Integer.parse(hash, 16) do
+      {integer_hash, ""} -> integer_hash
+      {integer_hash, remainder} -> {integer_hash, remainder}
+    end
+  end
+
+  defp transform_value(:auxiliary_technical_reference, "0x" <> hash) do
+    case Integer.parse(hash, 16) do
+      {integer_hash, ""} -> integer_hash
+      {integer_hash, remainder} -> {integer_hash, remainder}
+    end
+  end
+
+  defp transform_value(:unit_multiplier, value) when is_integer(value), do: value
+
+  defp transform_value(_key, value) when is_map(value) do
+    transform_values(value)
+  end
+
+  defp transform_value(_key, value) when is_list(value) do
+    Enum.map(value, fn
+      item when is_map(item) -> transform_values(item)
+      item -> item
+    end)
+  end
+
+  defp transform_value(_key, value), do: value
 
   defp structify(map, struct) do
     struct(struct, map)
   end
 
-  # The type is assigned to the token by DTIF based on the form used and
-  # official details of the token. Possible values:
-  # 0=Auxiliary Digital Token
-  # 1=Native Digital Token
-  # 2=Distributed Ledger Without a Native Digital Token
-  # 3=Functionally Fungible Group of Digital Tokens
-
-  defp transform({"dti_type" = key, 3}) do
-    {key, :fungible}
+  defp json_decode!(binary) do
+    :json.decode(binary)
   end
-
-  defp transform({"dti_type" = key, 2}) do
-    {key, :distributed}
-  end
-
-  defp transform({"dti_type" = key, 1}) do
-    {key, :native}
-  end
-
-  defp transform({"dti_type" = key, 0}) do
-    {key, :auxiliary}
-  end
-
-  # dlt type
-
-  defp transform({"dlt_type" = key, 1}) do
-    {key, :blockchain}
-  end
-
-  defp transform({"dlt_type" = key, 0}) do
-    {key, :other}
-  end
-
-  # Template version
-
-  defp transform({"template_version" = key, "V" <> version}) do
-    {key, Version.parse!(version)}
-  end
-
-  # genesis_block_utc_timestamp
-
-  defp transform({"genesis_block_utc_timestamp" = key, "<locked>"}) do
-    {key, nil}
-  end
-
-  defp transform({"genesis_block_utc_timestamp" = key, datetime}) do
-    {key, NaiveDateTime.from_iso8601!(datetime)}
-  end
-
-  # "fork_block_utc_timestamp"
-
-  defp transform({"fork_block_utc_timestamp" = key, "<locked>"}) do
-    {key, nil}
-  end
-
-  defp transform({"fork_block_utc_timestamp" = key, datetime}) do
-    {key, NaiveDateTime.from_iso8601!(datetime)}
-  end
-
-  # rec_date_time
-
-  defp transform({"rec_date_time" = key, "<locked>"}) do
-    {key, nil}
-  end
-
-  defp transform({"rec_date_time" = key, datetime}) do
-    {key, NaiveDateTime.from_iso8601!(datetime)}
-  end
-
-  # Short names becomes a simple list
-
-  defp transform({"short_names" = key, names}) do
-    short_names =
-      names
-      |> Enum.map(&Map.fetch!(&1, "short_name"))
-      |> Enum.sort_by(&String.length/1)
-
-    {key, short_names}
-  end
-
-  # Hashes
-
-  defp transform({"genesis_block_hash" = key, "<locked>"}) do
-    {key, nil}
-  end
-
-  defp transform({"genesis_block_hash" = key, "0x" <> hash}) do
-    case Integer.parse(hash, 16) do
-      {integer_hash, ""} -> {key, integer_hash}
-      {integer_hash, remainder} -> {key, {integer_hash, remainder}}
-    end
-  end
-
-  defp transform({"auxiliary_technical_reference" = key, "<locked>"}) do
-    {key, nil}
-  end
-
-  defp transform({"auxiliary_technical_reference" = key, "0x" <> hash}) do
-    case Integer.parse(hash, 16) do
-      {integer_hash, ""} -> {key, integer_hash}
-      {integer_hash, remainder} -> {key, {integer_hash, remainder}}
-    end
-  end
-
-  # Otherwise do nothing
-
-  defp transform(other) do
-    other
-  end
-
 end

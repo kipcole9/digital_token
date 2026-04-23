@@ -1,5 +1,13 @@
 # Changelog
 
+## Digital Token 2.0.0
+
+This is the changelog for Digital Token version 2.0.0 released on April 24th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)
+
+### Breaking Changes
+
+* dtif.org has moved to a paywall model requiring several thousand euros a year to access the full registry data. Fortunately they do maintain a publically available extract which is enough to support this library. However even that data is not accessible programmatically. Therefore the data is only updated when a maintainer downloads it manually.  As a result, the data is tied to the package release which is not a good long time solution. Like the Localize solution, the next release of digital_token will generate an .etf file of the content we need and store in in R2.
+
 ## Digital Token 1.0.0
 
 This is the changelog for Digital Token version 1.0.0 released on September 6th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/digital_token/tags)

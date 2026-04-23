@@ -1,0 +1,104 @@
+defmodule Mix.Tasks.DigitalToken.Registry.Update do
+  @moduledoc """
+  Updates the digital token registry data.
+
+  ## Usage
+
+      mix digital_token.registry.update [path_to_json]
+
+  If no path is given, fetches from the DTIF download URL.
+  Requires the following environment variables:
+
+  * `DTI_REGISTRY_USER_ID` — DTIF registry user ID.
+  * `DTI_REGISTRY_PASSWORD` — DTIF registry password.
+
+  """
+
+  use Mix.Task
+  require Logger
+
+  @shortdoc "Update digital token registry data"
+
+  @url "https://download.dtif.org/data.json"
+
+  @tokens_file_name DigitalToken.Decode.tokens_file_name()
+
+  @doc false
+  def run(args) do
+    require Logger
+
+    raise """
+    dtif.org no longer supports programmatic download of registry data.
+    The package author has to download the data manually. A mechanism to
+    update the data without updating the package will be delivered in the
+    next release.
+    """
+
+    case args do
+      [path] ->
+        update_from_file(path)
+
+      [] ->
+        update_from_url()
+    end
+  end
+
+  defp update_from_file(path) do
+    Logger.info("Reading digital token registry from #{path}")
+
+    body = File.read!(path)
+
+    tokens =
+      body
+      |> DigitalToken.Decode.decode_tokens()
+      |> :erlang.term_to_binary()
+
+    File.write!(@tokens_file_name, tokens)
+    Logger.info("Updated digital token registry at #{@tokens_file_name}")
+  end
+
+  defp update_from_url do
+    user_id =
+      System.get_env("DTI_REGISTRY_USER_ID") ||
+        raise "Set the DTI_REGISTRY_USER_ID environment variable to download registry data"
+
+    password =
+      System.get_env("DTI_REGISTRY_PASSWORD") ||
+        raise "Set the DTI_REGISTRY_PASSWORD environment variable to download registry data"
+
+    credentials = Base.encode64("#{user_id}:#{password}")
+
+    headers = [
+      {~c"Authorization", ~c"Basic #{credentials}"},
+      {~c"Accept", ~c"*/*"}
+    ]
+
+    :ssl.start()
+
+    url = String.to_charlist(@url)
+    request = {url, headers}
+    http_options = [ssl: [{:verify, :verify_none}], timeout: 30000]
+    options = [body_format: :binary]
+
+    Logger.info("Fetching digital token registry from #{@url}")
+
+    case :httpc.request(:get, request, http_options, options) do
+      {:ok, {{_, 200, _}, _response_headers, body}} ->
+        Logger.info("Successfully retrieved digital token registry")
+
+        tokens =
+          body
+          |> DigitalToken.Decode.decode_tokens()
+          |> :erlang.term_to_binary()
+
+        File.write!(@tokens_file_name, tokens)
+        Logger.info("Updated digital token registry at #{@tokens_file_name}")
+
+      {:ok, {{_, status, _}, _headers, body}} ->
+        Logger.warning("Failed to update digital token registry. HTTP #{status}: #{body}")
+
+      {:error, reason} ->
+        Logger.warning("Failed to update digital token registry. #{inspect(reason)}")
+    end
+  end
+end
