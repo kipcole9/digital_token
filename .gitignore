@@ -24,3 +24,6 @@ digital_token-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# The downloaded registry data
+DTI_Data_20260301.json
