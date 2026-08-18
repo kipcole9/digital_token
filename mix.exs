@@ -75,7 +75,7 @@ defmodule DigitalToken.MixProject do
       main: "readme",
       extras: ["README.md", "CHANGELOG.md", "LICENSE.md"],
       logo: "logo.png",
-      formatters: ["html"],
+      formatters: ["html", "markdown"],
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
     ]
   end
